@@ -50,8 +50,8 @@ def findSSH(threadId, numThreads):
                 print("port close")
                 closedPorts.write(ip + "\n")
                 closedPorts.flush()
-        openPorts.close()
-        closedPorts.close()
+    openPorts.close()
+    closedPorts.close()
 
 
 def main(numThreads):
