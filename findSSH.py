@@ -29,13 +29,12 @@ def findSSH(threadId, numThreads):
         for line in f:
             rangeIPs.append([line.split(",")[0], line.split(",")[1]])
 
-
+    closedPorts = open("closed-" + str(threadId), "w")
+    openPorts = open("open-" + str(threadId), "w")
     for i in range(len(rangeIPs)):
         start = rangeIPs[i][0]
         end = rangeIPs[i][1]
         listIPs = iterIPs(start, end.strip())
-        closedPorts = open("closed-" + str(threadId), "w")
-        openPorts = open("open-" + str(threadId), "w")
         for j in range(threadId, len(listIPs), numThreads):
             ip = listIPs[j]
             sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -43,15 +42,14 @@ def findSSH(threadId, numThreads):
             result = sock.connect_ex((ip, 22))
 
             if result == 0:
-                print("port open")
+                print("port open: " + ip)
                 openPorts.write(ip + "\n")
                 openPorts.flush()
             else:
-                print("port close")
                 closedPorts.write(ip + "\n")
                 closedPorts.flush()
-    openPorts.close()
     closedPorts.close()
+    openPorts.close()
 
 
 def main(numThreads):
