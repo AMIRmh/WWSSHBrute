@@ -24,18 +24,11 @@ def iterIPs(start, end):
 
 
 def findSSH(threadId, numThreads):
-    rangeIPs = []
-    with open(sys.argv[2]) as f:
-        for line in f:
-            rangeIPs.append([line.split(",")[0], line.split(",")[1]])
 
 
+    closedPorts = open("closed-" + str(threadId), "w")
+    openPorts = open("open-" + str(threadId), "w")
     for i in range(len(rangeIPs)):
-        start = rangeIPs[i][0]
-        end = rangeIPs[i][1]
-        listIPs = iterIPs(start, end.strip())
-        closedPorts = open("closed-" + str(threadId), "w")
-        openPorts = open("open-" + str(threadId), "w")
         for j in range(threadId, len(listIPs), numThreads):
             ip = listIPs[j]
             sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -43,25 +36,44 @@ def findSSH(threadId, numThreads):
             result = sock.connect_ex((ip, 22))
 
             if result == 0:
-                print("port open")
+                print("port open: " + ip)
                 openPorts.write(ip + "\n")
                 openPorts.flush()
             else:
-                print("port close")
                 closedPorts.write(ip + "\n")
                 closedPorts.flush()
-        openPorts.close()
-        closedPorts.close()
+    openPorts.close()
+    closedPorts.close()
 
 
 def main(numThreads):
     threadList = []
+    
+    rangeIPs = []
+    with open(sys.argv[2]) as f:
+        for line in f:
+            rangeIPs.append([line.split(",")[0], line.split(",")[1]])
+	
+    out = open("rangeIP", "w")
+    for i in range(len(rangeIPs)):
+        start = rangeIPs[i][0]
+        end = rangeIPs[i][1]
+        listIPs = iterIPs(start, end.strip())
+        for ip in listIPs:
+            out.write(ip)
+    
+    out.close()
+	
     for i in range(numThreads):
         threadList.append(bruteThread(i, numThreads))
         threadList[i].start()
 
     for t in threadList:
         t.join()
+
+
+		
+	
 if len(sys.argv) == 3:
     main(int(sys.argv[1]))
 else:
