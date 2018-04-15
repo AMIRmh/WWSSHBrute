@@ -3,12 +3,13 @@ import threading
 import sys
 
 class bruteThread (threading.Thread):
-    def __init__(self, threadId, numThreads):
+    def __init__(self, threadId, numThreads, listIPs):
         threading.Thread.__init__(self)
         self.threadId = threadId
         self.numThreads = numThreads
+        self.listIPs = listIPs
     def run(self):
-        findSSH(self.threadId, self.numThreads)
+        findSSH(self.threadId, self.numThreads, self.listIPs)
 
 def iterIPs(start, end):
     resultList = []
@@ -23,53 +24,43 @@ def iterIPs(start, end):
     return resultList
 
 
-def findSSH(threadId, numThreads):
+def findSSH(threadId, numThreads, listIPs):
 
-    openPorts = open("open-" + str(threadId), 'w')
-    closedPorts = open("closed-" + str(threadId), 'w')
-    counter = 0
-    with open("rangeIP", 'r') as rangeIP:
-        for ip in rangeIP:
-            if counter % threadId != 0:
-                counter += 1
-                continue
-            counter += 1
-            ip = ip.strip()
-            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            sock.settimeout(2)
-            result = sock.connect_ex((ip, 22))
+    closedPorts = open("closed-" + str(threadId), "a")
+    openPorts = open("open-" + str(threadId), "a")
 
-            if result == 0:
-                print("port open: " + ip)
-                openPorts.write(ip + "\n")
-                openPorts.flush()
-            else:
-                closedPorts.write(ip + "\n")
-                closedPorts.flush()
+    for j in range(threadId, len(listIPs), numThreads):
+        ip = listIPs[j]
+        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        sock.settimeout(2)
+        result = sock.connect_ex((ip, 22))
+
+        if result == 0:
+            print("port open: " + ip)
+            openPorts.write(ip + "\n")
+            openPorts.flush()
+        else:
+            closedPorts.write(ip + "\n")
+            closedPorts.flush()
     closedPorts.close()
     openPorts.close()
 
 
 def main(numThreads):
-    threadList = []
-    
+
     rangeIPs = []
     with open(sys.argv[2]) as f:
         for line in f:
             rangeIPs.append([line.split(",")[0], line.split(",")[1]])
 
-    out = open("rangeIP", "w")
     for i in range(len(rangeIPs)):
         start = rangeIPs[i][0]
         end = rangeIPs[i][1]
         listIPs = iterIPs(start, end.strip())
-        for ip in listIPs:
-            out.write(ip + "\n")
-    
-    out.close()
 
+    threadList = []
     for i in range(numThreads):
-        threadList.append(bruteThread(i, numThreads))
+        threadList.append(bruteThread(i, numThreads, listIPs))
         threadList[i].start()
 
     for t in threadList:
