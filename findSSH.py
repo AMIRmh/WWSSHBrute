@@ -26,8 +26,8 @@ def iterIPs(start, end):
 
 def findSSH(threadId, numThreads, listIPs):
 
-    closedPorts = open("closed-" + str(threadId), "a")
-    openPorts = open("open-" + str(threadId), "a")
+    closedPorts = open("closed-" + str(threadId), "a+")
+    openPorts = open("open-" + str(threadId), "a+")
 
     for j in range(threadId, len(listIPs), numThreads):
         ip = listIPs[j]
@@ -58,13 +58,13 @@ def main(numThreads):
         end = rangeIPs[i][1]
         listIPs = iterIPs(start, end.strip())
 
-    threadList = []
-    for i in range(numThreads):
-        threadList.append(bruteThread(i, numThreads, listIPs))
-        threadList[i].start()
-
-    for t in threadList:
-        t.join()
+        threadList = []
+        for i in range(numThreads):
+            threadList.append(bruteThread(i, numThreads, listIPs))
+            threadList[i].start()
+    
+        for t in threadList:
+            t.join()
 
 
 if len(sys.argv) == 3:
