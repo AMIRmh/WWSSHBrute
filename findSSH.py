@@ -28,9 +28,25 @@ def findSSH(threadId, numThreads, listIPs):
 
     closedPorts = open("closed-" + str(threadId), "a+")
     openPorts = open("open-" + str(threadId), "a+")
+    seenIP = True
 
     for j in range(threadId, len(listIPs), numThreads):
         ip = listIPs[j]
+        if seenIP == True:
+            with open("closed-" + str(threadId), 'r') as f:
+                broken = False
+                for line in f:
+                    if ip in line:
+                        broken = True
+                        break
+
+                if broken == True:
+                    continue
+                else:
+                    seenIP = False
+
+
+
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         sock.settimeout(2)
         result = sock.connect_ex((ip, 22))
@@ -62,9 +78,16 @@ def main(numThreads):
         for i in range(numThreads):
             threadList.append(bruteThread(i, numThreads, listIPs))
             threadList[i].start()
-    
+
         for t in threadList:
             t.join()
+
+        # remove the first line of the range IPs.
+        f = open(sys.argv[2], 'w')
+        for j in range(1, len(rangeIPs), 1):
+            ips = rangeIPs[j]
+            f.write(ips[0] + "," + ips[1])
+        f.close()
 
 
 if len(sys.argv) == 3:
